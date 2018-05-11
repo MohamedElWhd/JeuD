@@ -1,0 +1,71 @@
+package Model;
+
+import java.util.ConcurrentModificationException;
+import java.util.Random;
+
+public class MoveEnnemiesThread implements Runnable {
+    private GameDungeon game;
+    private static final int SCOPE_ENNEMY = 3;
+    
+    
+    public MoveEnnemiesThread(GameDungeon game) {
+        this.game = game;
+    }
+    
+    @Override
+    public void run() {
+        while(true)
+        {
+            try {
+                int randomIndex;
+                do {
+                    randomIndex = new Random().nextInt(game.getActualLevel().getEnnemies().size());
+                } while(!game.getActualLevel().getEnnemies().get(randomIndex).isAlive());
+                
+                double distance = Math.sqrt(
+                                        Math.pow(game.getActualLevel().getPlayerPosition().line - game.getActualLevel().getPositionEnnemies().get(randomIndex).line, 2) 
+                                      + Math.pow(game.getActualLevel().getPlayerPosition().column - game.getActualLevel().getPositionEnnemies().get(randomIndex).column, 2) 
+                                    );
+                if(distance <= SCOPE_ENNEMY) {
+                    // Le suivre
+                    int diff = game.getActualLevel().getPlayerPosition().column - game.getActualLevel().getPositionEnnemies().get(randomIndex).column;
+                    if(diff < 0)
+                        game.moveLeft(game.getActualLevel().getEnnemies().get(randomIndex));
+                    else if(diff > 0)
+                        game.moveRight(game.getActualLevel().getEnnemies().get(randomIndex));
+                    else {
+                        diff = game.getActualLevel().getPlayerPosition().line - game.getActualLevel().getPositionEnnemies().get(randomIndex).line;
+                        if(diff < 0)
+                            game.moveUp(game.getActualLevel().getEnnemies().get(randomIndex));
+                        else
+                            game.moveDown(game.getActualLevel().getEnnemies().get(randomIndex));
+                    }
+                    // Attaque si distance avec le player == 1
+                    // Les monstres peuvent attaquer en diagonal
+                    
+                    if(distance <= Math.sqrt(2) ) {
+                        game.ennemiAttack(game.getActualLevel().getEnnemies().get(randomIndex));
+                    }
+                } else {
+                    // Direction alÃ©atoire
+                    int randomDirection = new Random().nextInt(4);
+                    switch(randomDirection)
+                    {
+                        case 0: game.moveUp(game.getActualLevel().getEnnemies().get(randomIndex)); break;
+                        case 1: game.moveLeft(game.getActualLevel().getEnnemies().get(randomIndex)); break;
+                        case 2: game.moveRight(game.getActualLevel().getEnnemies().get(randomIndex)); break;
+                        case 3: game.moveDown(game.getActualLevel().getEnnemies().get(randomIndex)); break;
+                        default: break;
+                    }
+                    
+                }
+                Thread.sleep(100);
+            } catch (InterruptedException ex) {
+                System.err.println(ex.getMessage());
+            } catch(ConcurrentModificationException ex){
+                System.err.println("conncurrent error");
+            }
+        }
+    }
+    
+}
