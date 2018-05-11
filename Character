@@ -1,0 +1,5 @@
+package Model;
+
+public abstract class Character {
+    // classe mère de player et ennemy
+}
