@@ -1,0 +1,86 @@
+package Model;
+
+
+public class Ennemy extends Character {
+    private String name;
+    private int maxLife;
+    private int currentLife;
+    private int damage;
+    private boolean alive;
+    private int deliverXp;
+
+    
+    public Ennemy(String name, int life, int damage, int deliverXp) {
+        this.name = name;
+        this.damage = damage;
+        this.alive = true;
+        this.maxLife = life;
+        this.currentLife = this.maxLife;
+        this.deliverXp = deliverXp;
+    }
+    
+
+    public String getName() {
+        return name;
+    }
+
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+
+    public int getMaxLife() {
+        return maxLife;
+    }
+
+
+    public void setMaxLife(int maxLife) {
+        this.maxLife = maxLife;
+    }
+
+
+    public int getCurrentLife() {
+        return currentLife;
+    }
+
+
+    public void setCurrentLife(int currentLife) {
+        this.currentLife = currentLife;
+    }
+
+
+    public int getDamage() {
+        return damage;
+    }
+
+
+    public void setDamage(int damage) {
+        this.damage = damage;
+    }
+
+
+    public boolean isAlive() {
+        return alive;
+    }
+
+
+    public void setAlive(boolean alive) {
+        this.alive = alive;
+    }
+
+    @Override
+    public String toString() {
+        return "name : " + this.name + " -- Degats : " + this.damage + " -- maxLife : " + this.maxLife + "\n";
+    }
+        
+    public int getDeliverXp() {
+        return deliverXp;
+    }
+
+    public void setDeliverXp(int deliverXp) {
+        this.deliverXp = deliverXp;
+    }
+    
+    
+}
