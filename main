@@ -1,0 +1,19 @@
+package main;
+
+import View.GameDungeonView;
+import javax.swing.JFrame;
+
+public class Main {
+
+    
+    public static void main(String[] args) {
+        JFrame dungeonGame = new JFrame("Dungeon game");
+        dungeonGame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        dungeonGame.setExtendedState(JFrame.MAXIMIZED_BOTH);
+        dungeonGame.setUndecorated(true);
+        dungeonGame.getContentPane().add(new GameDungeonView());
+        dungeonGame.pack();
+        dungeonGame.setVisible(true);
+    }
+    
+}
