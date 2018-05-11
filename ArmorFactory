@@ -1,0 +1,22 @@
+package Model;
+
+public class ArmorFactory {
+    
+    public ArmorFactory(){
+        
+    }
+    
+    public Armor createArmor(int i){
+       Armor res = null;
+        if(i ==0)
+            res = new Armor("Leather Armor", 10, 100);
+        else if(i == 1)
+            res = new Armor("Silver Armor", 25, 125);
+        else if(i == 2) 
+            res = new Armor("Golden Armor", 50, 150);
+        
+       return res;
+    }
+ 
+        
+}
