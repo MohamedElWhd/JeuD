@@ -1,0 +1,43 @@
+package Controller;
+
+import Model.GameDungeon;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+
+public class Keyboard implements KeyListener {
+    private GameDungeon game;
+    private static long lastTimeButton = System.nanoTime();
+    
+    public Keyboard(GameDungeon game) {
+        this.game = game;
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        int button = e.getKeyCode();
+        long actualTime = System.nanoTime();
+        if(Math.abs(actualTime - lastTimeButton) >= 200000000)
+        {
+            lastTimeButton = actualTime;
+            switch(button)
+            {
+                case KeyEvent.VK_UP: game.moveUp(game.getActualLevel().getPlayer()); break;
+                case KeyEvent.VK_DOWN: game.moveDown(game.getActualLevel().getPlayer()); break;
+                case KeyEvent.VK_LEFT: game.moveLeft(game.getActualLevel().getPlayer()); break;
+                case KeyEvent.VK_RIGHT: game.moveRight(game.getActualLevel().getPlayer()); break;
+                case KeyEvent.VK_SPACE: game.playerAttack(); break;
+               
+                default: break;
+            } 
+        }
+        
+    }
+    
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+    }
+    @Override
+    public void keyTyped(KeyEvent e) {
+    }
+}
