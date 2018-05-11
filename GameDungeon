@@ -1,0 +1,338 @@
+package Model;
+
+import java.util.ArrayList;
+import java.util.Random;
+
+public class GameDungeon implements Subject {
+    private Map actualLevel;
+    private ArrayList<Observer> myObservers;
+    private Armor[] armors;
+    private Weapon[] weapons;
+    private Potion[] potions;
+    
+    public GameDungeon() {
+        this.actualLevel = new Map("textures/level_1.txt");
+        this.myObservers = new ArrayList<>();
+        new Thread(new MoveEnnemiesThread(this)).start();
+        
+        // Types d'armures (mais gÃ©nÃ©rer ailleurs, voir ArmorFactory)
+        armors = new Armor[3];
+        armors[0] = new Armor("Leather Armor", 10, 100);
+        armors[1] = new Armor("Silver Armor", 25, 125);
+        armors[2] = new Armor("Golden Armor", 50, 150);
+        
+        // Types d'armes (mais gÃ©nÃ©rer ailleurs, voir WeaponFactory)
+        weapons = new Weapon[3];
+        weapons[0] = new Weapon("Wooden Sword", 50, 100);
+        weapons[1] = new Weapon("Silver Sword", 75, 125);
+        weapons[2] = new Weapon("Golden Sword", 100, 150);
+        
+        // Types de potions
+        potions = new Potion[2];
+        potions[0] = new Potion("Poison", -(actualLevel.getPlayer().getMaxLife())/2);
+        potions[1] = new Potion("Heal", (actualLevel.getPlayer().getMaxLife())/2);
+        
+        
+        
+        // Donne arme et armure de dÃ©part au joueur
+        actualLevel.getPlayer().setEquipedWeapon(weapons[0]);
+        Item[] inventory = actualLevel.getPlayer().getInventory();
+        inventory[0] = weapons[0];
+        actualLevel.getPlayer().setEquipedArmor(armors[0]);
+        inventory[1] = armors[0];
+         
+    }
+
+    public void moveLeft(Character character) {
+        if(character == actualLevel.getPlayer()) 
+        {
+            Position posPlayer = actualLevel.getPlayerPosition();
+            Position newPosPlayer = new Position(posPlayer.line, posPlayer.column-1);
+            // 1) Il ne peut pas aller avant la premiÃ¨re ligne
+            // 2) Il ne peut pas marcher sur un obstacle
+            // 3) Il ne peut pas marcher sur un ennemi
+            if((newPosPlayer.column >= 0) 
+                    && (isBlockObstacle(newPosPlayer) 
+                    && !isEnnemyAlive(newPosPlayer)))
+            {
+                actualLevel.getPlayerPosition().column -= 1;
+            }
+            if(isBlockChest(posPlayer)){
+               moveOnChest();
+               actualLevel.getMap()[posPlayer.line][posPlayer.column] = Tiles.CHEST_OPENED;
+            }
+            if(isBlockDoor(posPlayer)){
+                actualLevel.nextLevel();
+                notifyObservers();
+            }
+            
+            
+        } else 
+        {
+            int indexEnnemy = actualLevel.getEnnemies().indexOf(character);
+            Position posEnnemy = actualLevel.getPositionEnnemies().get(indexEnnemy);
+            Position newPosEnnemy = new Position(posEnnemy.line, posEnnemy.column-1);
+            if((newPosEnnemy.column >= 0) 
+                    && (isBlockObstacle(newPosEnnemy)
+                    && (!isEnnemyAlive(newPosEnnemy))
+                    && (!actualLevel.getPlayerPosition().equals(newPosEnnemy)))) 
+            {
+                actualLevel.getPositionEnnemies().get(indexEnnemy).column -= 1;
+            }
+        }
+        notifyObservers();
+    }
+    
+    public void moveRight(Character character) {
+        if(character == actualLevel.getPlayer()) 
+        {
+            Position posPlayer = actualLevel.getPlayerPosition();
+            Position newPosPlayer = new Position(posPlayer.line, posPlayer.column+1);
+            // 1) Il ne peut pas aller avant la premiÃ¨re ligne
+            // 2) Il ne peut pas marcher sur un obstacle
+            // 3) Il ne peut pas marcher sur un ennemi
+            if((newPosPlayer.column < actualLevel.getWidth()) 
+                    && (isBlockObstacle(newPosPlayer) 
+                    && !isEnnemyAlive(newPosPlayer)))
+            {
+                actualLevel.getPlayerPosition().column += 1;
+            }
+            if(isBlockChest(posPlayer)){
+               moveOnChest();
+               actualLevel.getMap()[posPlayer.line][posPlayer.column] = Tiles.CHEST_OPENED;
+            }
+            if(isBlockDoor(posPlayer)){
+                actualLevel.nextLevel();
+                notifyObservers();
+            } 
+        }
+        else 
+           {
+            int indexEnnemy = actualLevel.getEnnemies().indexOf(character);
+            Position posEnnemy = actualLevel.getPositionEnnemies().get(indexEnnemy);
+            Position newPosEnnemy = new Position(posEnnemy.line, posEnnemy.column+1);
+            if((newPosEnnemy.column < actualLevel.getWidth()) 
+                    && (isBlockObstacle(newPosEnnemy)
+                    && (!isEnnemyAlive(newPosEnnemy))
+                    && (!actualLevel.getPlayerPosition().equals(newPosEnnemy)))) 
+            {
+                actualLevel.getPositionEnnemies().get(indexEnnemy).column += 1;
+            }
+        }
+        notifyObservers();
+    
+    }
+    
+    private void moveOnChest()
+            // donne un bonus ou malus, arme ou armure alÃ©atoirement
+    {   WeaponFactory weaponFactory = new WeaponFactory(); 
+        ArmorFactory armorFactory = new ArmorFactory();
+        int i = new Random().nextInt(3);
+               if(i == 0){
+                   int f = new Random().nextInt(armors.length);
+                   if(actualLevel.getPlayer().isPlaceInventory()){
+                       actualLevel.getPlayer().addItem(armorFactory.createArmor(f));
+                }
+               }
+               if(i == 1){
+                   int f1 = new Random().nextInt(weapons.length);
+                   if(actualLevel.getPlayer().isPlaceInventory()){
+                       actualLevel.getPlayer().addItem(weaponFactory.createWeapon(f1));
+                       
+                }
+               }
+               if(i == 2){
+                   int f2 = new Random().nextInt(potions.length);
+                   Potion potion = potions[f2];
+                   actualLevel.getPlayer().setCurrentLife(potion.getPower() + actualLevel.getPlayer().getCurrentLife()); 
+               }
+    }
+    
+    private boolean isBlockDoor(Position pos){
+        return actualLevel.getMap()[pos.line][pos.column] == Tiles.DOOR;
+        
+    }
+    
+    private boolean isBlockChest(Position pos){
+        return (actualLevel.getMap()[pos.line][pos.column] == Tiles.BONUS 
+                    || actualLevel.getMap()[pos.line][pos.column] == Tiles.MALUS);
+        
+    }
+    
+    private boolean isEnnemyAlive(Position pos) {
+        Ennemy ennemy = null;
+        int indiceEnnemy = actualLevel.getPositionEnnemies().indexOf(pos);
+        if (indiceEnnemy >= 0) {
+            ennemy = actualLevel.getEnnemies().get(indiceEnnemy);
+        }
+        return ennemy != null && ennemy.isAlive();
+    }
+    
+    private boolean isBlockObstacle(Position pos){
+        return (actualLevel.getMap()[pos.line][pos.column] != Tiles.OBSTACLE1 
+                && actualLevel.getMap()[pos.line][pos.column] != Tiles.GRES
+                && actualLevel.getMap()[pos.line][pos.column] != Tiles.BUISSON
+                && actualLevel.getMap()[pos.line][pos.column] != Tiles.WOODEN_WALL);
+    }
+    
+    public void moveDown(Character character) {
+        if(character == actualLevel.getPlayer()) 
+        {
+            Position posPlayer = actualLevel.getPlayerPosition();
+            Position newPosPlayer = new Position(posPlayer.line+1, posPlayer.column);
+
+            if((newPosPlayer.line < actualLevel.getHeight()) 
+                    && (isBlockObstacle(newPosPlayer) 
+                    && !isEnnemyAlive(newPosPlayer))) 
+            {
+                actualLevel.getPlayerPosition().line += 1;
+            }
+            if(isBlockChest(posPlayer)){
+               moveOnChest();
+               actualLevel.getMap()[posPlayer.line][posPlayer.column] = Tiles.CHEST_OPENED;
+            }
+            if(isBlockDoor(posPlayer)){
+                actualLevel.nextLevel();
+                notifyObservers();
+            }
+        } else 
+        {
+            int indexEnnemy = actualLevel.getEnnemies().indexOf(character);
+            Position posEnnemy = actualLevel.getPositionEnnemies().get(indexEnnemy);
+            Position newPosEnnemy = new Position(posEnnemy.line+1, posEnnemy.column);
+            if((newPosEnnemy.line < actualLevel.getHeight()) 
+                    && (isBlockObstacle(newPosEnnemy)
+                    && (!isEnnemyAlive(newPosEnnemy))
+                    && (!actualLevel.getPlayerPosition().equals(newPosEnnemy)))) 
+            {
+                actualLevel.getPositionEnnemies().get(indexEnnemy).line += 1;
+            }
+        }
+        notifyObservers();
+    }
+    
+    public void moveUp(Character character) {
+        if(character == actualLevel.getPlayer()) 
+        {
+            Position posPlayer = actualLevel.getPlayerPosition();
+            Position newPosPlayer = new Position(posPlayer.line-1, posPlayer.column);
+
+            if((newPosPlayer.line >= 0) 
+                    && (isBlockObstacle(newPosPlayer)
+                    && !isEnnemyAlive(newPosPlayer))) 
+            {
+                actualLevel.getPlayerPosition().line -= 1;
+            }
+            if(isBlockChest(posPlayer)){
+               moveOnChest();
+               actualLevel.getMap()[posPlayer.line][posPlayer.column] = Tiles.CHEST_OPENED;
+            }
+            if(isBlockDoor(posPlayer)){
+                actualLevel.nextLevel();
+                notifyObservers();
+            }
+            
+        } else 
+        {
+            int indexEnnemy = actualLevel.getEnnemies().indexOf(character);
+            Position posEnnemy = actualLevel.getPositionEnnemies().get(indexEnnemy);
+            Position newPosEnnemy = new Position(posEnnemy.line-1, posEnnemy.column);
+            if((newPosEnnemy.line >= 0) 
+                    && (isBlockObstacle(newPosEnnemy)
+                    && (!isEnnemyAlive(newPosEnnemy))
+                    && (!actualLevel.getPlayerPosition().equals(newPosEnnemy)))) 
+            {
+                actualLevel.getPositionEnnemies().get(indexEnnemy).line -= 1;
+            }
+        }
+        notifyObservers();
+    }
+    /**
+     * @return the actualLevel
+     */
+    public Map getActualLevel() {
+        return actualLevel;
+    }
+
+    /**
+     * @param actualLevel the actualLevel to set
+     */
+    public void setActualLevel(Map actualLevel) {
+        this.actualLevel = actualLevel;
+    }
+
+    @Override
+    public void attach(Observer o) {
+        this.myObservers.add(o);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for(Observer o : myObservers)
+            o.update();
+    }
+    
+    public Armor[] getArmors() {
+        return armors;
+    }
+
+    public void setArmors(Armor[] armors) {
+        this.armors = armors;
+    }
+
+    public Weapon[] getWeapons() {
+        return weapons;
+    }
+
+    public void setWeapons(Weapon[] weapons) {
+        this.weapons = weapons;
+    }
+
+    public void ennemiAttack(Ennemy attacker) {
+        int lifePlayer = actualLevel.getPlayer().getCurrentLife();
+        Armor equipedArmor = actualLevel.getPlayer().getEquipedArmor();
+        if(equipedArmor != null){
+            actualLevel.getPlayer().setCurrentLife(lifePlayer + equipedArmor.getProtection() - attacker.getDamage());
+        }else{
+            actualLevel.getPlayer().setCurrentLife(lifePlayer - attacker.getDamage());
+        }
+        equipedArmor.setDurability( equipedArmor.getDurability() - 5);
+        notifyObservers();
+    }
+
+    public void playerAttack() {
+        for(int i = actualLevel.getPlayerPosition().line-1; i <= actualLevel.getPlayerPosition().line+1; i++) {
+            for(int j = actualLevel.getPlayerPosition().column-1; j <= actualLevel.getPlayerPosition().column+1; j++) {
+                Position currentPos = new Position(i, j);
+                int utilisationLeft = actualLevel.getPlayer().getEquipedWeapon().getUtilisationLeft();
+                if(    i >= 0 && i < actualLevel.getHeight() 
+                    && j >= 0 && j < actualLevel.getWidth() 
+                    && !actualLevel.getPlayerPosition().equals(new Position(i, j))// pas s'attaquer lui-mÃªme
+                    && actualLevel.getPositionEnnemies().contains(currentPos)
+                    && utilisationLeft >= 0) // l'arme n'est pas usÃ©e
+                {
+                    // On vÃ©rifie tous les ennemis dans la liste des positions 
+                    // des ennemis si leur position correspond Ã  la position courante. 
+                    // Si c'est le cas, on l'attaque si le monstre est vivant
+                    for(int k = 0; k < actualLevel.getPositionEnnemies().size(); k++) {
+                        if(actualLevel.getPositionEnnemies().get(k).equals(currentPos) 
+                                && actualLevel.getEnnemies().get(k).isAlive()) {
+                            Ennemy ennemy = actualLevel.getEnnemies().get(k);
+                            ennemy.setCurrentLife(ennemy.getCurrentLife() - actualLevel.getPlayer().getEquipedWeapon().getDamage()); 
+                            actualLevel.getPlayer().getEquipedWeapon().setUtilisationLeft(utilisationLeft - 5);
+                            
+                            
+                            if(ennemy.getCurrentLife() <= 0){
+                                
+                                ennemy.setAlive(false);
+                                actualLevel.getPlayer().setCurrentXp(actualLevel.getPlayer().getCurrentXp() + ennemy.getDeliverXp());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        notifyObservers();
+    }
+    
+}
