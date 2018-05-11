@@ -1,0 +1,26 @@
+package Model;
+
+
+public abstract class Item {
+    protected boolean equiped = false; 
+    protected String name;
+
+    public boolean isEquiped() {
+        return equiped;
+    }
+
+    public void setEquiped(boolean equiped) {
+        this.equiped = equiped;
+    }
+    
+
+  
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+}
