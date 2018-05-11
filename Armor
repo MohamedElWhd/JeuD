@@ -1,0 +1,49 @@
+package Model;
+
+
+public class Armor extends Item {
+    private int protection;
+    private int durability;
+    private int index; // son index dans l'inventaire 
+
+    public int getIndex() {
+        return index;
+    }
+
+    public void setIndex(int index) {
+        this.index = index;
+    }
+    
+
+    public Armor(String name, int protection, int durability){
+        super.name = name;
+        this.protection = protection;
+        this.durability = durability;
+    }
+    
+    
+
+    public int getProtection() {
+        return protection;
+    }
+
+    public void setProtection(int protection) {
+        this.protection = protection;
+    }
+    
+    public int getDurability() {
+        return durability;
+    }
+
+    public void setDurability(int durability) {
+        if(durability < 0)
+            this.durability = 0;
+        else 
+            this.durability = durability;
+    }
+    
+    @Override
+    public String toString() {
+        return "" + super.getName();
+    }
+}
