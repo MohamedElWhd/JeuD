@@ -1,0 +1,234 @@
+
+package Model;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+
+public class Map {
+    private Tiles map[][];
+    private int nbColumns;
+    private int nbLines;
+    private Position playerPosition;
+    private Player player;
+    private ArrayList<Position> positionEnemies;
+    private ArrayList<Ennemy> ennemies;
+    private HashMap<Position, Item> items;
+    private String[] mapLevel = new String[5];
+    private int indexLevel = 1;
+    private int nbLevels = 5;
+
+    public Map(String path) {
+        createLevel(path);
+        player = new Player();
+
+        for(int i = 1; i < nbLevels; i++)
+            mapLevel[i] = "textures/level_"+i+".txt";
+    }
+    
+    
+    public void nextLevel(){
+        indexLevel++;
+        if(indexLevel < nbLevels)
+            createLevel(mapLevel[indexLevel]);
+    }
+    
+    
+    // Méthode qui crée le niveau de la map sur base d'un fichier .txt
+    private void createLevel(String path){
+    	
+        try {
+            BufferedReader file = new BufferedReader(new InputStreamReader(new FileInputStream(path)));
+            // Dimensions
+            file.readLine();
+            nbColumns = Integer.parseInt(file.readLine());
+            file.readLine();
+            nbLines = Integer.parseInt(file.readLine());
+            
+            // Map
+            map = new Tiles[nbLines][nbColumns];
+            file.readLine();
+            for(int i = 0; i < nbLines; i++) {
+                String[] tiles = file.readLine().split(" ");
+                for(int j = 0; j < nbColumns; j++) {
+                    switch(tiles[j]) {
+                    
+                    	case "a": map[i][j] = Tiles.WATER;
+                    	break;
+                    	case "b": map[i][j] = Tiles.GRES;
+                    	break;                    	
+                    	case "c": map[i][j] = Tiles.SAND;
+                    	break;  
+                    	case "d": map[i][j] = Tiles.GRASS;
+                    	break;
+                    	case "e": map[i][j] = Tiles.BUISSON;
+                    	break;
+                    	case "l": map[i][j] = Tiles.LAVA;
+                    	break;
+                    	case "x": map[i][j] = Tiles.WOOD;
+                    	break;
+                    	case "w": map[i][j] = Tiles.WOODEN_WALL;
+                    	break;
+                        case "1": map[i][j] = Tiles.GROUND1;
+                        break;
+                        case "2": map[i][j] = Tiles.GROUND2;
+                        break;
+                        case "3": map[i][j] = Tiles.GROUND3;
+                        break;
+                        case "4": map[i][j] = Tiles.OBSTACLE1;
+                        break;
+                        case "5": map[i][j] = Tiles.SOL;
+                        break;
+                        case "6": map[i][j] = Tiles.PLASMA;
+                        break;
+                        case "7": map[i][j] = Tiles.BONUS;
+                        break;
+                        case "8": map[i][j] = Tiles.DOOR;
+                        break;
+                        default:
+                        break;
+                    }
+                }
+            }
+         
+            
+            // Ennemis
+            ennemies = new ArrayList<>();
+            positionEnemies = new ArrayList<>();
+            file.readLine();
+            for(int i = 0; i < nbLines; i++) {
+                String[] tiles = file.readLine().split(" ");
+                for(int j = 0; j < nbColumns; j++) {
+                    switch(tiles[j]) {
+                    	case "5": ennemies.add(new Ennemy("Dejaegere", 75, 5, 3)); positionEnemies.add(new Position(i,j)); break;
+                        case "6": ennemies.add(new Ennemy("Daniele", 100, 10, 5)); positionEnemies.add(new Position(i, j)); break;
+                        case "7": ennemies.add(new Ennemy("Rosenfeld", 150, 25, 10)); positionEnemies.add(new Position(i, j)); break;
+                        case "8": ennemies.add(new Ennemy("Bersini", 200, 50, 20)); positionEnemies.add(new Position(i, j)); break;
+                        default: break;
+                    }
+                }
+            }
+            // Player
+            file.readLine();
+            String[] posPlayer = file.readLine().split(" ");
+            playerPosition = new Position(Integer.parseInt(posPlayer[0]), Integer.parseInt(posPlayer[1]));
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+        } catch(NumberFormatException ex) {
+            System.err.println(ex.getMessage());
+        }
+    }
+
+    
+    public Tiles[][] getMap() {
+        return map;
+    }
+
+
+    public void setMap(Tiles[][] map) {
+        this.map = map;
+    }
+
+
+    public int getWidth() {
+        return nbColumns;
+    }
+
+
+    public void setWidth(int width) {
+        this.nbColumns = width;
+    }
+
+
+    public int getHeight() {
+        return nbLines;
+    }
+
+
+    public void setHeight(int height) {
+        this.nbLines = height;
+    }
+
+
+    public Position getPlayerPosition() {
+        return playerPosition;
+    }
+
+
+    public void setPlayerPosition(Position playerPosition) {
+        this.playerPosition = playerPosition;
+    }
+
+
+    public HashMap<Position, Item> getItemsPositions() {
+        return items;
+    }
+
+
+    public void setItemsPositions(HashMap<Position, Item> itemsPositions) {
+        this.items = itemsPositions;
+    }
+
+
+    public Player getPlayer() {
+        return player;
+    }
+
+
+    public void setPlayer(Player player) {
+        this.player = player;
+    }
+
+
+    public ArrayList<Position> getPositionEnnemies() {
+        return positionEnemies;
+    }
+
+
+    public void setPositionEnnemies(ArrayList<Position> positionEnnemies) {
+        this.positionEnemies = positionEnnemies;
+    }
+
+
+    public ArrayList<Ennemy> getEnnemies() {
+        return ennemies;
+    }
+
+    public void setEnnemies(ArrayList<Ennemy> ennemies) {
+        this.ennemies = ennemies;
+    }
+
+    /**
+     * @return the nbLevels
+     */
+    public int getNbLevels() {
+        return nbLevels;
+    }
+
+    /**
+     * @param nbLevels the nbLevels to set
+     */
+    public void setNbLevels(int nbLevels) {
+        this.nbLevels = nbLevels;
+    }
+
+    /**
+     * @return the indexLevel
+     */
+    public int getIndexLevel() {
+        return indexLevel;
+    }
+
+    /**
+     * @param indexLevel the indexLevel to set
+     */
+    public void setIndexLevel(int indexLevel) {
+        this.indexLevel = indexLevel;
+    }
+    
+
+}
